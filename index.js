@@ -159,27 +159,55 @@ const addEmployee = () => {
                 choices: roleSelection()
             },
             {
+                name: "isManager",
+                message: "Is this employee a manager?",
+                type: "list",
+                choices: ["Yes", "No"]
+            },
+            {
                 name: "manager",
                 message: "Who is the employee's manager?",
                 type: "list",
-                choices: managerSelection()
+                choices: managerSelection(),
+                when: answers => {
+                    return answers.isManager === "No"
+                }
             }]).then((answer) => {
-                let roleID = roleSelection().indexOf(answer.role) + 1;
-                let managerID = managerSelection().indexOf(answer.manager) + 1;
-                let query = `INSERT INTO employee SET ?`
-                connection.query(query,
-                    {
-                        first_name: answer.firstName,
-                        last_name: answer.lastName,
-                        role_id: roleID,
-                        manager_id: managerID
-                    },
-                    (err) => {
-                        if (err) throw err;
-                        console.log(chalk.green.bold(`Employee ${answer.firstName} ${answer.lastName} has been added!`));
-                        start();
-                    }
-                )
+                if (answer.isManager === "Yes") {
+                    let roleID = roleSelection().indexOf(answer.role) + 1;
+                    let query = `INSERT INTO employee SET ?`
+                    connection.query(query,
+                        {
+                            first_name: answer.firstName,
+                            last_name: answer.lastName,
+                            role_id: roleID,
+                            manager_id: null
+                        },
+                        (err) => {
+                            if (err) throw err;
+                            console.log(chalk.green.bold(`Manager: ${answer.firstName} ${answer.lastName} has been added!`));
+                            start();
+                        }
+                    )
+                }
+                else {
+                    let roleID = roleSelection().indexOf(answer.role) + 1;
+                    let managerID = managerSelection().indexOf(answer.manager) + 1;
+                    let query = `INSERT INTO employee SET ?`
+                    connection.query(query,
+                        {
+                            first_name: answer.firstName,
+                            last_name: answer.lastName,
+                            role_id: roleID,
+                            manager_id: managerID
+                        },
+                        (err) => {
+                            if (err) throw err;
+                            console.log(chalk.green.bold(`Employee: ${answer.firstName} ${answer.lastName} has been added!`));
+                            start();
+                        }
+                    )
+                }
             })
 }
 // Function for role selection list when adding Employee
@@ -256,7 +284,7 @@ const addRole = () => {
                 },
                 (err) => {
                     if (err) throw err;
-                    console.log(chalk.green.bold(`Role ${answer.title} has been added!`));
+                    console.log(chalk.green.bold(`Role: ${answer.title} has been added!`));
                     start();
                 }
             )
@@ -273,4 +301,35 @@ const departmentSelection = () => {
         }
     })
     return departments;
+}
+const addDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                name: "name",
+                message: "What is the name of the department?",
+                type: "input",
+                validate: function (input) {
+                    if (input === "") {
+                        console.log(chalk.red.bold("Field cannot be blank!"));
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+            }
+        ]).then((answer) => {
+            let query = `INSERT INTO department SET ?`
+            connection.query(query,
+                {
+                    name: answer.name
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log(chalk.green.bold(`Department: ${answer.name} has been added!`))
+                    start();
+                }
+            )
+        })
 }
