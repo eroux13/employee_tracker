@@ -77,4 +77,21 @@ const start = () => {
             }
         })
 }
+// Function to view all employees with their respective title, department, salary, and manager if applicable
+const viewEmployees = () => {
+    // SQL Query
+    let query = `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager 
+    FROM employee INNER JOIN role ON employee.role_id = role.id 
+    INNER JOIN department ON role.department_id = department.id 
+    LEFT JOIN employee AS manager ON employee.manager_id = manager.id 
+    ORDER BY ID ASC;`
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        console.log("\n");
+        // Display Results
+        console.table(res);
+        // Call start() for menu
+        start();
+    })
+}
 
