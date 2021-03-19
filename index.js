@@ -206,3 +206,71 @@ const managerSelection = () => {
     })
     return managers;
 }
+// Function to add a role
+const addRole = () => {
+    inquirer
+        .prompt([
+            {
+                name: "title",
+                message: "What is the role title?",
+                type: "input",
+                validate: function (input) {
+                    if (input === "") {
+                        console.log(chalk.red.bold("Field cannot be blank!"));
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+            },
+            {
+                name: "salary",
+                message: "What is the salary for the role?",
+                type: "number",
+                validate: function (input) {
+                    if (input === "") {
+                        console.log(chalk.red.bold("Field cannot be blank!"));
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+            },
+            {
+                name: "department",
+                message: "What department does this role belong to?",
+                type: "list",
+                choices: departmentSelection()
+
+            }
+        ]).then((answer) => {
+            let departmentID = departmentSelection().indexOf(answer.department) + 1;
+            let query = `INSERT INTO role SET ?`
+            connection.query(query,
+                {
+                    title: answer.title,
+                    salary: answer.salary,
+                    department_id: departmentID
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log(chalk.green.bold(`Role ${answer.title} has been added!`));
+                    start();
+                }
+            )
+        })
+}
+// Function for department selection list when adding role
+const departments = [];
+const departmentSelection = () => {
+    let query = `SELECT * FROM department`
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            departments.push(res[i].name);
+        }
+    })
+    return departments;
+}
