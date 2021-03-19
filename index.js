@@ -6,7 +6,7 @@ const inquirer = require('inquirer');
 const consoleTable = require('console.table');
 // Require ascii text generator for welcome message
 const ascii_text_generator = require('ascii-text-generator');
-// Require chalk for welcome message styling
+// Require chalk for message styling
 const chalk = require('chalk');
 
 // Create connection to DB
@@ -25,7 +25,7 @@ connection.connect((err) => {
     let welcomeMessage = "CMS TRACKER";
     let ascii_text = ascii_text_generator(welcomeMessage, "2");
     console.log(chalk.blue.bold.bgGreen(ascii_text));
-    console.log("\n Welcome to the Employee Content Management System! \n")
+    console.log(chalk.blue.bold("\n Welcome to the Employee Content Management System! \n"));
     start();
 })
 const start = () => {
@@ -119,7 +119,7 @@ const viewDepartments = () => {
         start();
     })
 }
-// Function to add an employee
+// Function to add an employee/manager
 const addEmployee = () => {
     // Inquirer for user input
     inquirer
@@ -302,6 +302,7 @@ const departmentSelection = () => {
     })
     return departments;
 }
+// Function to add a department
 const addDepartment = () => {
     inquirer
         .prompt([
@@ -332,4 +333,51 @@ const addDepartment = () => {
                 }
             )
         })
+}
+// Function to update an employee
+const updateRole = () => {
+    inquirer
+        .prompt([
+            {
+                name: "employee",
+                message: "Which employee would you like to update?",
+                type: "list",
+                choices: employeeSelection()
+            },
+            {
+                name: "roleUpdate",
+                message: "Which role do you want to assign to the employee?",
+                type: "list",
+                choices: roleSelection()
+            }
+        ]).then((answer) => {
+            let employeeID = employeeSelection().indexOf(answer.employee) + 1;
+            let roleID = roleSelection().indexOf(answer.roleUpdate) + 1;
+            let query = `UPDATE employee SET ? WHERE ?`
+            connection.query(query,
+                {
+                    role_id: roleID
+                },
+                {
+                    id: employeeID
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log(chalk.green.bold(`Employee: ${answer.employee} role has been updated!`));
+                    start();
+                }
+            )
+        })
+}
+// Function for employee selection list when updating an employee
+const employees = [];
+const employeeSelection = () => {
+    let query = `SELECT CONCAT(first_name, " ", last_name) AS name FROM employee;`
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            employees.push(res[i].name)
+        }
+    })
+    return employees;
 }
