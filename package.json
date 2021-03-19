@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/eroux13/employee_tracker#readme",
   "dependencies": {
+    "ascii-text-generator": "^1.0.5",
+    "chalk": "^4.1.0",
     "console.table": "^0.10.0",
     "inquirer": "^8.0.0",
     "mysql": "^2.18.1"
