@@ -28,7 +28,6 @@ connection.connect((err) => {
     console.log("\n Welcome to the Employee Content Management System! \n")
     start();
 })
-
 const start = () => {
     inquirer
         .prompt({
@@ -66,7 +65,7 @@ const start = () => {
                     addDepartment();
                     break;
                 case "Update Employee Role":
-                    updateEmployee();
+                    updateRole();
                     break;
                 case "Exit":
                     connection.end();
@@ -107,7 +106,7 @@ const viewRoles = () => {
         start();
     })
 }
-// Function to view all roles
+// Function to view all departments
 const viewDepartments = () => {
     // SQL Query
     let query = `SELECT name AS department_name FROM department;`
@@ -120,4 +119,90 @@ const viewDepartments = () => {
         start();
     })
 }
-
+// Function to add an employee
+const addEmployee = () => {
+    // Inquirer for user input
+    inquirer
+        .prompt([
+            {
+                name: "firstName",
+                message: "What is the employee's first name?",
+                type: "input",
+                validate: function (input) {
+                    if (input === "") {
+                        console.log(chalk.red.bold("Field cannot be blank!"));
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+            },
+            {
+                name: "lastName",
+                message: "What is the employee's last name?",
+                type: "input",
+                validate: function (input) {
+                    if (input === "") {
+                        console.log(chalk.red.bold("Field cannot be blank!"));
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }
+            },
+            {
+                name: "role",
+                message: "What is the employee's role?",
+                type: "list",
+                choices: roleSelection()
+            },
+            {
+                name: "manager",
+                message: "Who is the employee's manager?",
+                type: "list",
+                choices: managerSelection()
+            }]).then((answer) => {
+                let roleID = roleSelection().indexOf(answer.role) + 1;
+                let managerID = managerSelection().indexOf(answer.manager) + 1;
+                let query = `INSERT INTO employee SET ?`
+                connection.query(query,
+                    {
+                        first_name: answer.firstName,
+                        last_name: answer.lastName,
+                        role_id: roleID,
+                        manager_id: managerID
+                    },
+                    (err) => {
+                        if (err) throw err;
+                        console.log(chalk.green.bold(`Employee ${answer.firstName} ${answer.lastName} has been added!`));
+                        start();
+                    }
+                )
+            })
+}
+// Function for role selection list when adding Employee
+const roles = [];
+const roleSelection = () => {
+    let query = `SELECT * FROM role`
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            roles.push(res[i].title)
+        }
+    })
+    return roles;
+}
+// Function for manager selection list when adding Employee
+const managers = [];
+const managerSelection = () => {
+    let query = `SELECT CONCAT(first_name, " ", last_name) AS manager FROM employee WHERE manager_id IS NULL;`
+    connection.query(query, (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            managers.push(res[i].manager)
+        }
+    })
+    return managers;
+}
