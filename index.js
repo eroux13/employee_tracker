@@ -335,49 +335,64 @@ const addDepartment = () => {
         })
 }
 // Function to update an employee
+// Needed to wrap the connection around the inquirer prompt due to async
 const updateRole = () => {
-    inquirer
-        .prompt([
-            {
-                name: "employee",
-                message: "Which employee would you like to update?",
-                type: "list",
-                choices: employeeSelection()
-            },
-            {
-                name: "roleUpdate",
-                message: "Which role do you want to assign to the employee?",
-                type: "list",
-                choices: roleSelection()
-            }
-        ]).then((answer) => {
-            let employeeID = employeeSelection().indexOf(answer.employee) + 1;
-            let roleID = roleSelection().indexOf(answer.roleUpdate) + 1;
-            let query = `UPDATE employee SET ? WHERE ?`
-            connection.query(query,
-                {
-                    role_id: roleID
-                },
-                {
-                    id: employeeID
-                },
-                (err) => {
-                    if (err) throw err;
-                    console.log(chalk.green.bold(`Employee: ${answer.employee} role has been updated!`));
-                    start();
-                }
-            )
-        })
-}
-// Function for employee selection list when updating an employee
-const employees = [];
-const employeeSelection = () => {
     let query = `SELECT CONCAT(first_name, " ", last_name) AS name FROM employee;`
     connection.query(query, (err, res) => {
-        if (err) throw err;
-        for (var i = 0; i < res.length; i++) {
-            employees.push(res[i].name)
-        }
+        inquirer
+            .prompt([
+                {
+                    name: "employee",
+                    message: "Which employee would you like to update?",
+                    type: "list",
+                    choices: res
+                },
+                {
+                    name: "roleUpdate",
+                    message: "Which role do you want to assign to the employee?",
+                    type: "list",
+                    choices: roleSelection()
+                }
+                // Original call to employeeSelection() was not loading in time for the selections to render
+            ]).then((answer) => {
+                console.log(res);
+                console.log(answer);
+                let employeeID = res.findIndex(function (employee, index) {
+                    if (employee.name === answer.employee) {
+                        return true;
+                    }
+
+                });
+                console.log(employeeID);
+                let roleID = roleSelection().indexOf(answer.roleUpdate) + 1;
+                let query = `UPDATE employee SET ? WHERE ?`
+                connection.query(query,
+                    [
+                        {
+                            role_id: roleID
+                        },
+                        {
+                            id: employeeID + 1
+                        }
+                    ],
+                    (err) => {
+                        if (err) throw err;
+                        console.log(chalk.green.bold(`Employee: ${answer.employee} role has been updated!`));
+                        start();
+                    }
+                )
+            })
     })
-    return employees;
 }
+// Function for employee selection list when updating an employee
+// const employees = [];
+// const employeeSelection = () => {
+//     let query = `SELECT CONCAT(first_name, " ", last_name) AS name FROM employee;`
+//     connection.query(query, (err, res) => {
+//         if (err) throw err;
+//         for (var i = 0; i < res.length; i++) {
+//             employees.push(res[i].name)
+//         }
+//     })
+//     return employees;
+// }
