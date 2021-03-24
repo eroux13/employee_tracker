@@ -122,6 +122,8 @@ const viewDepartments = () => {
 // Function to add an employee/manager
 const addEmployee = () => {
     // Inquirer for user input
+    // Added managerList variable due to async
+    let managerList = managerSelection();
     inquirer
         .prompt([
             {
@@ -192,14 +194,16 @@ const addEmployee = () => {
                 }
                 else {
                     let roleID = roleSelection().indexOf(answer.role) + 1;
-                    let managerID = managerSelection().indexOf(answer.manager) + 1;
+                    let managerID = managerList.find((manager) => {
+                        return manager.name === answer.manager;
+                    });
                     let query = `INSERT INTO employee SET ?`
                     connection.query(query,
                         {
                             first_name: answer.firstName,
                             last_name: answer.lastName,
                             role_id: roleID,
-                            manager_id: managerID
+                            manager_id: managerID.id
                         },
                         (err) => {
                             if (err) throw err;
@@ -225,11 +229,12 @@ const roleSelection = () => {
 // Function for manager selection list when adding Employee
 const managers = [];
 const managerSelection = () => {
-    let query = `SELECT CONCAT(first_name, " ", last_name) AS manager FROM employee WHERE manager_id IS NULL;`
+    // Needed to change alias name due to inquirer obj reading
+    let query = `SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee WHERE manager_id IS NULL;`
     connection.query(query, (err, res) => {
         if (err) throw err;
         for (var i = 0; i < res.length; i++) {
-            managers.push(res[i].manager)
+            managers.push(res[i])
         }
     })
     return managers;
@@ -355,15 +360,15 @@ const updateRole = () => {
                 }
                 // Original call to employeeSelection() was not loading in time for the selections to render
             ]).then((answer) => {
-                console.log(res);
-                console.log(answer);
+                // console.log(res);
+                // console.log(answer);
                 let employeeID = res.findIndex(function (employee, index) {
                     if (employee.name === answer.employee) {
                         return true;
                     }
 
                 });
-                console.log(employeeID);
+                // console.log(employeeID);
                 let roleID = roleSelection().indexOf(answer.roleUpdate) + 1;
                 let query = `UPDATE employee SET ? WHERE ?`
                 connection.query(query,
